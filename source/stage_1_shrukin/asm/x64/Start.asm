@@ -1,0 +1,31 @@
+;
+; PREBOOT
+;
+; GuidePoint Security LLC
+;
+; Threat and Attack Simulation Team
+;
+[BITS 64]
+
+;
+; Constants
+;
+EFI_CONF_OFFSET		EQU	$USR_CODE_END - $EFI_CODE_END
+EFI_CODE_LENGTH		EQU	$EFI_CODE_END - $EFI_CODE_ENT
+KRN_CODE_LENGTH		EQU	$KRN_CODE_END - $KRN_CODE_ENT
+USR_CODE_LENGTH		EQU	$USR_CODE_END - $USR_CODE_ENT
+
+EFI_CODE_ENT:
+	incbin "efi/stage_1_shrukin_efi.x64.bin"
+EFI_CODE_END:
+	dq	EFI_CONF_OFFSET
+	dq	EFI_CODE_LENGTH
+	dq	KRN_CODE_LENGTH
+	dq	USR_CODE_LENGTH
+KRN_CODE_ENT:
+	pop	rax
+KRN_CODE_END:
+
+USR_CODE_ENT:
+	pop	rax
+USR_CODE_END:
