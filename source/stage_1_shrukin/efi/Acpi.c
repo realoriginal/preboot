@@ -10,7 +10,7 @@
 
 #include "Common.h"
 
-typedef struct
+typedef struct __attribute__(( packed ))
 {
 	UINT64	Signature;
 	UINT8	Checksum;
@@ -23,14 +23,14 @@ typedef struct
 	UINT8	Reserved[3];
 } EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER;
 
-typedef struct
+typedef struct __attribute__(( packed ))
 {
 	UINT32	Signature;
 	UINT32	Length;
 	UINT8	Revision;
 	UINT8	Checksum;
-	CHAR8	OemId[6];
-	CHAR8	OemTableId[8];
+	UINT8	OemId[6];
+	UINT64	OemTableId;
 	UINT32	OemRevision;
 	UINT32	CreatorId;
 	UINT32	CreatorRevision;
@@ -45,7 +45,9 @@ typedef struct __attribute__(( packed ))
 typedef struct __attribute__(( packed ))
 {
 	EFI_ACPI_SDT_HEADER	Header;
+	UINT8			HostAddressWidth;
 	UINT8			Flags;
+	UINT8			Reserved[10];
 } DMAR ;
 
 #define EFI_ACPI_1_TABLE_GUID { 0xeb9d2d30, 0x2d88, 0x11d3, {0x9a, 0x16, 0x0, 0x90, 0x27, 0x3f, 0xc1, 0x4d } }
@@ -62,7 +64,6 @@ typedef struct __attribute__(( packed ))
 D_SEC( B ) EFI_STATUS AcpiEnableDma( EFI_SYSTEM_TABLE* SystemTable )
 {
 	UINTN						Cnt = 0;
-	EFI_STATUS					Est = EFI_NOT_FOUND;
 
 	EFI_GUID					Ac1 = EFI_ACPI_1_TABLE_GUID;
 	EFI_GUID					Ac2 = EFI_ACPI_2_TABLE_GUID;
@@ -99,11 +100,14 @@ D_SEC( B ) EFI_STATUS AcpiEnableDma( EFI_SYSTEM_TABLE* SystemTable )
 
 							/* Is this DMAR? */
 							if ( Ent->Signature == 0x52414d44 ) {
-								/* Zero out the table */
-								__builtin_memset( &Ent->Signature, 0, sizeof( Ent->Signature ) );
+								/* Get a pointer to the table */
+								Dmr = C_PTR( Ent );
 
-								/* Notify success!?! */
-								Est = EFI_SUCCESS;
+								/* Remove the Kernel DMA Protection Opt-In Flag */
+								Dmr->Flags &= 1UL << 2;
+
+								/* Set the status */
+								return EFI_SUCCESS;
 							};
 						};
 					};
@@ -111,5 +115,5 @@ D_SEC( B ) EFI_STATUS AcpiEnableDma( EFI_SYSTEM_TABLE* SystemTable )
 			};
 		};
 	};
-	return Est;
+	return EFI_NOT_FOUND;
 }

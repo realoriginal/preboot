@@ -117,6 +117,8 @@ def inject_efi_staged( device : pcie_lib.TransactionLayer, efi_system_table : in
     status of the injection.
     """
 
+    error_code = None
+
     # has the stage_0 bootloader been compiled?
     if not os.path.isfile( './source/stage_0/stage_0.x64.bin' ):
         logging.error( 'stage_0 has not been compiled.' );
@@ -214,13 +216,11 @@ def inject_efi_staged( device : pcie_lib.TransactionLayer, efi_system_table : in
         # print the stage_1 status!
         stage_1_code = device.mem_read_4( DMA_STATUS_ADDRESS + DMA_STATUS_OFFSET_ERROR_CODE );
 
-        # print the error!
-        if stage_1_code != 0:
-            # error!
-            logging.error( f'Stage_1 error @ {hex(stage_1_code)}' )
-        else:
-            # success!
-            logging.info( f'Stage_1 returned EFI_SUCCESS' )
+        # return the error code
+        error_code = stage_1_code
 
     # notify we are ready to start the boot process
     device.mem_write_1( DMA_STATUS_ADDRESS + DMA_STATUS_OFFSET_DMA_STATUS, DMA_STATUS_STAGE_4 );
+
+    # return the error code
+    return error_code

